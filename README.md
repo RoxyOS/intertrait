@@ -6,6 +6,9 @@
 
 This library provides direct casting among trait objects implemented by a type.
 
+`intertrait` supports both `std` and `no_std + alloc` environments. The runtime crate itself is
+`#![no_std]`, but it requires `alloc` because it uses `Box`, `Rc`, `Arc`, and a heap-backed registry.
+
 In Rust, a trait object for a sub-trait of [`std::any::Any`] can be downcast to a concrete type at runtime
 if the type is known. But no direct casting between two trait objects (i.e. without involving the concrete type
 of the backing value) is possible (even no coercion from a trait object for a trait to that for its super-trait yet).
@@ -24,6 +27,27 @@ linkme = "0.2"
 ```
 
 The `linkme` dependency is required due to the use of `linkme` macro in the output of `intertrait` macros.
+
+## `no_std` Support
+`intertrait` can be used in `no_std` targets as long as `alloc` is available. No feature toggle is needed.
+
+This means:
+
+* `intertrait` works directly in `std` environments.
+* `intertrait` also works in `no_std` environments with `extern crate alloc`.
+* This is not a pure-`core` crate, because casting support relies on allocation-backed types such as `Box`,
+  `Rc`, and `Arc`.
+
+Minimal `no_std` usage looks like this:
+
+```rust,ignore
+#![no_std]
+
+extern crate alloc;
+
+use intertrait::*;
+use intertrait::cast::*;
+```
 
 # Usage
 
@@ -116,7 +140,7 @@ fn main() {}
 ```
 
 ## `Arc` Support
-`std::sync::Arc` is unique in that it implements `downcast` method only on `dyn Any + Send + Sync + 'static'.
+`Arc` is unique in that it implements `downcast` method only on `dyn Any + Send + Sync + 'static`.
 To use with `Arc`, the following steps should be taken:
 
 * Mark source traits with [`CastFromSync`] instead of [`CastFrom`]
